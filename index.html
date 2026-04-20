@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Heijunka — Production Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<style>
+  :root {
+    --bg:         #0d0f12;
+    --surface:    #141720;
+    --surface2:   #1c2030;
+    --border:     #2a2f3d;
+    --accent:     #f0a500;
+    --accent2:    #e05c00;
+    --danger:     #e03030;
+    --success:    #22c55e;
+    --text:       #e8eaf0;
+    --muted:      #7a8099;
+    --mono:       'Share Tech Mono', monospace;
+    --sans:       'Barlow', sans-serif;
+    --cond:       'Barlow Condensed', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Scanline overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: var(--cond);
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+  .user-info {
+    display: flex; align-items: center; gap: 1rem;
+    font-size: .8rem; color: var(--muted); font-family: var(--mono);
+  }
+  #userName { color: var(--text); }
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: .3rem .8rem;
+    font-family: var(--mono);
+    font-size: .75rem;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .05em;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Nav tabs ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; gap: 0;
+  }
+  .tab {
+    padding: .75rem 1.5rem;
+    font-family: var(--cond);
+    font-size: .9rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Main layout ── */
+  main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Login screen ── */
+  #loginPage {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: calc(100vh - 56px);
+    gap: 2rem;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3rem 4rem;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+  .login-box h1 {
+    font-family: var(--cond);
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: .5rem;
+  }
+  .login-box p { color: var(--muted); margin-bottom: 2.5rem; font-size: .9rem; }
+  .btn-ms {
+    background: #0078d4;
+    color: #fff;
+    border: none;
+    padding: .9rem 2rem;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: .75rem;
+    transition: background .2s;
+    letter-spacing: .02em;
+  }
+  .btn-ms:hover { background: #006cbd; }
+  .ms-icon { width: 20px; height: 20px; }
+
+  /* ── Section headers ── */
+  .section-label {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .75rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Form elements ── */
+  label {
+    display: block;
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .4rem;
+  }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: .65rem 1rem;
+    font-family: var(--mono);
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--bg); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .form-group { margin-bottom: 1rem; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: .7rem 1.5rem;
+    font-family: var(--cond);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #ffc107; }
+  .btn-danger  { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-success:hover { filter: brightness(1.1); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Card lookup result ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .field-block { }
+  .field-label {
+    font-family: var(--mono);
+    font-size: .65rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .2rem;
+  }
+  .field-value {
+    font-size: 1rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+  .status-none        { border-color: var(--muted);   color: var(--muted); }
+  .status-printed     { border-color: #3b82f6;         color: #3b82f6; }
+  .status-loaded      { border-color: var(--accent);   color: var(--accent); }
+  .status-assembly    { border-color: #a855f7;         color: #a855f7; }
+  .status-test        { border-color: #06b6d4;         color: #06b6d4; }
+  .status-backflush   { border-color: var(--success);  color: var(--success); }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem 0;
+  }
+  .ticker-display {
+    position: relative;
+    width: 220px; height: 220px;
+  }
+  .ticker-ring {
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .ticker-ring-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+  .ticker-ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 628;
+    stroke-dashoffset: 628;
+    transition: stroke-dashoffset .5s ease, stroke .5s ease;
+  }
+  .ticker-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .ticker-count {
+    font-family: var(--mono);
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: color .5s;
+  }
+  .ticker-pdr {
+    font-family: var(--mono);
+    font-size: .85rem;
+    color: var(--muted);
+    margin-top: .2rem;
+  }
+  .ticker-pdr span { color: var(--text); }
+
+  .btn-tap {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 3px solid var(--border);
+    font-family: var(--cond);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text);
+    cursor: pointer;
+    transition: all .1s;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-tap:active {
+    transform: scale(.93);
+    background: var(--surface);
+    border-color: var(--accent);
+  }
+  .btn-tap:hover { border-color: var(--accent); }
+  .btn-tap.met { border-color: var(--success); }
+
+  .ticker-info {
+    font-family: var(--mono);
+    font-size: .8rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* ── Warning banner ── */
+  .warning-banner {
+    background: rgba(224, 92, 0, .15);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    padding: 1rem 1.5rem;
+    font-family: var(--mono);
+    font-size: .85rem;
+    display: none;
+    margin-bottom: 1.5rem;
+    animation: pulse-border 2s infinite;
+  }
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--accent2); }
+    50%       { border-color: rgba(224,92,0,.3); }
+  }
+  .warning-banner.show { display: flex; align-items: center; gap: 1rem; }
+  .warn-icon { font-size: 1.4rem; }
+
+  /* ── Close session panel ── */
+  .close-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    display: none;
+  }
+  .close-panel.show { display: block; }
+  .close-panel h3 {
+    font-family: var(--cond);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--danger);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Open orders table ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .data-table th {
+    font-family: var(--mono);
+    font-size: .65rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: .5rem .75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: .6rem .75rem;
+    border-bottom: 1px solid rgba(42,47,61,.5);
+    font-family: var(--mono);
+    font-size: .8rem;
+  }
+  .data-table tr:hover td { background: var(--surface2); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--surface2);
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.5rem;
+    font-family: var(--mono);
+    font-size: .85rem;
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform .3s ease;
+    max-width: 320px;
+  }
+  #toast.show { transform: translateX(0); }
+  #toast.error { border-left-color: var(--danger); }
+  #toast.success { border-left-color: var(--success); }
+
+  /* ── Misc ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .85rem;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    .form-row { grid-template-columns: 1fr; }
+    header { padding: 0 1rem; }
+    nav { padding: 0 1rem; overflow-x: auto; }
+    .tab { padding: .75rem 1rem; font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage">
+  <div class="login-box">
+    <h1>Heijunka</h1>
+    <p>Production tracking &amp; scheduling system</p>
+    <button class="btn-ms" onclick="signIn()">
+      <svg class="ms-icon" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Sign in with Microsoft
+    </button>
+  </div>
+</div>
+
+<!-- App Shell (hidden until login) -->
+<div id="appShell" style="display:none">
+
+  <header>
+    <div class="logo">Heijunka <span>/ Tracker</span></div>
+    <div class="user-info">
+      <span id="userName">Loading...</span>
+      <button class="btn-ghost" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="tab active" onclick="showTab('cardTab', this)">Card Lookup</button>
+    <button class="tab"        onclick="showTab('productionTab', this)">Production</button>
+    <button class="tab"        onclick="showTab('ordersTab', this); loadOrders()">Open Orders</button>
+  </nav>
+
+  <div id="warnBanner" class="warning-banner">
+    <span class="warn-icon">⚠</span>
+    <span id="warnText">You have less than 1 hour left in the shift and haven't met PDR!</span>
+  </div>
+
+  <main>
+
+    <!-- ── TAB: CARD LOOKUP ── -->
+    <div id="cardTab" class="page active">
+      <div class="section-label">Card Lookup</div>
+
+      <div class="card">
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Card Number</label>
+            <input type="text" id="cardInput" placeholder="Enter card number…"
+              onkeydown="if(event.key==='Enter') lookupCard()" />
+          </div>
+          <button class="btn btn-primary" onclick="lookupCard()">Look Up</button>
+        </div>
+      </div>
+
+      <div id="cardResult" style="display:none">
+        <div class="card">
+          <div class="section-label">Card Details</div>
+          <div class="card-grid" id="cardFields"></div>
+
+          <hr class="divider" />
+
+          <div class="section-label">Update Status</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Order Status</label>
+              <select id="statusSelect">
+                <option value="None">None</option>
+                <option value="Printed">Printed</option>
+                <option value="Loaded">Loaded</option>
+                <option value="Assembly Complete">Assembly Complete</option>
+                <option value="Test Complete">Test Complete</option>
+                <option value="Backflush Complete">Backflush Complete</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Notes</label>
+              <input type="text" id="notesInput" maxlength="25" placeholder="Optional notes…" />
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="updateCard()" style="margin-top:.75rem">
+            Save Update
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: PRODUCTION ── -->
+    <div id="productionTab" class="page">
+      <div class="section-label">Daily Production</div>
+
+      <!-- Session setup -->
+      <div id="sessionSetup" class="card">
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">
+          Select your producing cell and line to start or resume today's session.
+        </p>
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Producing Cell</label>
+            <select id="cellSelect" onchange="filterLines()">
+              <option value="">— Select cell —</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Production Line</label>
+            <select id="lineSelect">
+              <option value="">— Select line —</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="startSession()" style="margin-top:1rem">
+          Start / Resume Session
+        </button>
+      </div>
+
+      <!-- Active ticker -->
+      <div id="tickerPanel" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+            <div>
+              <div class="field-label">Cell / Line</div>
+              <div class="field-value" id="tickerCellLine">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="field-label">PDR Target</div>
+              <div class="field-value" id="tickerPdrDisplay" style="font-family:var(--mono)">—</div>
+            </div>
+          </div>
+
+          <div class="ticker-wrap">
+            <div class="ticker-display">
+              <svg class="ticker-ring" viewBox="0 0 220 220">
+                <circle class="ticker-ring-bg" cx="110" cy="110" r="100"/>
+                <circle class="ticker-ring-fill" id="ringFill" cx="110" cy="110" r="100"/>
+              </svg>
+              <div class="ticker-center">
+                <div class="ticker-count" id="tickerCount">0</div>
+                <div class="ticker-pdr">of <span id="tickerPdrInner">0</span></div>
+              </div>
+            </div>
+
+            <button class="btn-tap" id="tapBtn" onclick="tapUnit()">+1</button>
+
+            <div class="ticker-info" id="tickerStatus">Tap to record each completed unit</div>
+          </div>
+
+          <button class="btn btn-danger" onclick="toggleClosePanel()" style="width:100%;margin-top:.5rem">
+            End of Day — Close Session
+          </button>
+        </div>
+
+        <div id="closePanel" class="close-panel">
+          <h3>Close Session</h3>
+          <div id="missReasonGroup" style="display:none">
+            <div class="form-group">
+              <label>Reason for Missing PDR <span style="color:var(--danger)">*</span></label>
+              <select id="missReasonSelect">
+                <option value="">— Select reason —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Additional Notes</label>
+              <textarea id="missNotesInput" rows="2" maxlength="500"
+                placeholder="Optional details…" style="resize:vertical"></textarea>
+            </div>
+          </div>
+          <div id="closeSummary" style="font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-bottom:1rem"></div>
+          <button class="btn btn-danger" onclick="closeSession()">Confirm &amp; Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: OPEN ORDERS ── -->
+    <div id="ordersTab" class="page">
+      <div class="section-label">Open Orders</div>
+      <div class="card" style="padding:0;overflow:auto">
+        <div id="ordersBody">
+          <div class="empty-state"><span class="spinner"></span>&nbsp; Loading orders…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — update these before deploying
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  clientId:  'YOUR_CLIENT_ID',
+  tenantId:  'YOUR_TENANT_ID',
+  apiBase:   'https://your-api.railway.app/api',
+  apiScope:  'api://YOUR_CLIENT_ID/access_as_user'
+};
+
+// ── MSAL setup ──────────────────────────────────────────────
+const msalConfig = {
+  auth: {
+    clientId:    CONFIG.clientId,
+    authority:   `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: window.location.origin
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+const msalClient = new msal.PublicClientApplication(msalConfig);
+
+let currentUser  = null;
+let accessToken  = null;
+
+// State
+let activeSession     = null;
+let allCells          = [];
+let missReasons       = [];
+let warningFired      = false;
+let shiftCheckTimer   = null;
+
+// ── Auth ─────────────────────────────────────────────────────
+async function signIn() {
+  try {
+    const resp = await msalClient.loginPopup({
+      scopes: ['openid', 'profile', 'email', CONFIG.apiScope]
+    });
+    msalClient.setActiveAccount(resp.account);
+    await initApp(resp.account);
+  } catch(e) {
+    console.error(e);
+    toast('Login failed: ' + e.message, 'error');
+  }
+}
+
+function signOut() {
+  msalClient.logoutPopup();
+  location.reload();
+}
+
+async function getToken() {
+  const account = msalClient.getActiveAccount();
+  if (!account) throw new Error('Not signed in');
+  const result = await msalClient.acquireTokenSilent({
+    scopes: [CONFIG.apiScope], account
+  }).catch(() => msalClient.acquireTokenPopup({ scopes: [CONFIG.apiScope] }));
+  return result.accessToken;
+}
+
+async function apiFetch(path, opts = {}) {
+  const token = await getToken();
+  const res   = await fetch(CONFIG.apiBase + path, {
+    ...opts,
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || 'API error');
+  }
+  return res.json();
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+window.onload = async () => {
+  await msalClient.initialize();
+  const accounts = msalClient.getAllAccounts();
+  if (accounts.length > 0) {
+    msalClient.setActiveAccount(accounts[0]);
+    await initApp(accounts[0]);
+  }
+};
+
+async function initApp(account) {
+  currentUser = account;
+  document.getElementById('loginPage').style.display  = 'none';
+  document.getElementById('appShell').style.display   = 'block';
+  document.getElementById('userName').textContent =
+    account.name || account.username;
+
+  await loadCells();
+  await loadMissReasons();
+  startShiftCheck();
+}
+
+// ── Tab nav ──────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARD LOOKUP
+// ═══════════════════════════════════════════════════════════
+let currentCardno = null;
+
+async function lookupCard() {
+  const cardno = document.getElementById('cardInput').value.trim();
+  if (!cardno) return toast('Enter a card number', 'error');
+  try {
+    const card = await apiFetch(`/cards/${encodeURIComponent(cardno)}`);
+    currentCardno = cardno;
+    renderCard(card);
+    document.getElementById('cardResult').style.display = 'block';
+  } catch(e) {
+    toast(e.message, 'error');
+    document.getElementById('cardResult').style.display = 'none';
+  }
+}
+
+function renderCard(card) {
+  const fmt = v => v ? new Date(v).toLocaleDateString() : '—';
+  const fields = [
+    { label: 'Card No',         value: card.cardno },
+    { label: 'Status',          value: statusBadge(card.orderStatus) },
+    { label: 'Card Status',     value: card.cardStatus },
+    { label: 'SO ID',           value: card.soId || '—' },
+    { label: 'SO Line',         value: card.soLine ?? '—' },
+    { label: 'Customer',        value: card.custName || '—' },
+    { label: 'Country',         value: card.country  || '—' },
+    { label: 'Part ID',         value: card.partId   || '—' },
+    { label: 'Part Desc',       value: card.partDesc || '—' },
+    { label: 'Factory Date',    value: fmt(card.factoryDate) },
+    { label: 'Loaded',          value: fmt(card.loadedDate) },
+    { label: 'Assembled',       value: fmt(card.assembledDate) },
+    { label: 'Tested',          value: fmt(card.testedDate) },
+    { label: 'Backflushed',     value: fmt(card.backflushDate) },
+    { label: 'Notes',           value: card.notes || '—' },
+  ];
+
+  document.getElementById('cardFields').innerHTML =
+    fields.map(f => `
+      <div class="field-block">
+        <div class="field-label">${f.label}</div>
+        <div class="field-value">${f.value}</div>
+      </div>`).join('');
+
+  document.getElementById('statusSelect').value = card.orderStatus;
+  document.getElementById('notesInput').value   = card.notes || '';
+}
+
+function statusBadge(status) {
+  const cls = {
+    'None':                'status-none',
+    'Printed':             'status-printed',
+    'Loaded':              'status-loaded',
+    'Assembly Complete':   'status-assembly',
+    'Test Complete':       'status-test',
+    'Backflush Complete':  'status-backflush'
+  }[status] || 'status-none';
+  return `<span class="status-badge ${cls}">${status}</span>`;
+}
+
+async function updateCard() {
+  if (!currentCardno) return;
+  const status = document.getElementById('statusSelect').value;
+  const notes  = document.getElementById('notesInput').value.trim();
+  try {
+    await apiFetch(`/cards/${encodeURIComponent(currentCardno)}/status`, {
+      method: 'PUT',
+      body:   JSON.stringify({ status, notes })
+    });
+    toast('Card updated successfully', 'success');
+    lookupCard(); // refresh
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRODUCTION TICKER
+// ═══════════════════════════════════════════════════════════
+async function loadCells() {
+  try {
+    allCells = await apiFetch('/production/producing-cells');
+    const cells   = [...new Set(allCells.map(c => c.producingCell))].sort();
+    const cellSel = document.getElementById('cellSelect');
+    cells.forEach(c => {
+      const o = document.createElement('option');
+      o.value = o.textContent = c;
+      cellSel.appendChild(o);
+    });
+  } catch(e) { console.error('Failed to load cells', e); }
+}
+
+function filterLines() {
+  const cell    = document.getElementById('cellSelect').value;
+  const lineSel = document.getElementById('lineSelect');
+  lineSel.innerHTML = '<option value="">— Select line —</option>';
+  allCells.filter(c => c.producingCell === cell).forEach(c => {
+    const o = document.createElement('option');
+    o.value = o.textContent = c.prodLine;
+    lineSel.appendChild(o);
+  });
+}
+
+async function loadMissReasons() {
+  try {
+    missReasons = await apiFetch('/production/miss-reasons');
+    const sel = document.getElementById('missReasonSelect');
+    missReasons.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id; o.textContent = r.reason;
+      sel.appendChild(o);
+    });
+  } catch(e) { console.error('Failed to load miss reasons', e); }
+}
+
+async function startSession() {
+  const cell = document.getElementById('cellSelect').value;
+  const line = document.getElementById('lineSelect').value;
+  if (!cell || !line) return toast('Select a cell and line', 'error');
+
+  try {
+    // Try to get existing session first
+    let session = await apiFetch(
+      `/production/session?producingCell=${encodeURIComponent(cell)}&prodLine=${encodeURIComponent(line)}`
+    );
+
+    if (!session) {
+      session = await apiFetch('/production/session', {
+        method: 'POST',
+        body:   JSON.stringify({ producingCell: cell, prodLine: line })
+      });
+    }
+
+    if (!session.sessionOpen) {
+      toast('Session for today is already closed.', 'error');
+      return;
+    }
+
+    activeSession = { ...session, producingCell: cell, prodLine: line };
+    renderTicker(session.unitsCompleted, session.pdrTarget);
+    document.getElementById('sessionSetup').style.display = 'none';
+    document.getElementById('tickerPanel').style.display  = 'block';
+    document.getElementById('tickerCellLine').textContent = `${cell} / ${line}`;
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+function renderTicker(units, pdr) {
+  const pdrInt  = Math.ceil(pdr);
+  const met     = units >= pdrInt;
+  const pct     = Math.min(units / pdrInt, 1);
+  const circ    = 2 * Math.PI * 100; // r=100
+
+  document.getElementById('tickerCount').textContent  = units;
+  document.getElementById('tickerPdrInner').textContent = pdrInt;
+  document.getElementById('tickerPdrDisplay').textContent = pdrInt + ' units';
+
+  const fill  = document.getElementById('ringFill');
+  const count = document.getElementById('tickerCount');
+  const tap   = document.getElementById('tapBtn');
+  const stat  = document.getElementById('tickerStatus');
+
+  fill.style.strokeDashoffset = circ - pct * circ;
+
+  if (met) {
+    fill.style.stroke = 'var(--success)';
+    count.style.color = 'var(--success)';
+    tap.classList.add('met');
+    stat.textContent  = '✓ PDR met — great work!';
+    stat.style.color  = 'var(--success)';
+  } else {
+    const remaining = pdrInt - units;
+    fill.style.stroke = units === 0 ? 'var(--border)' : 'var(--danger)';
+    count.style.color = units === 0 ? 'var(--text)'   : 'var(--danger)';
+    tap.classList.remove('met');
+    stat.textContent  = `${remaining} unit${remaining !== 1 ? 's' : ''} to meet PDR`;
+    stat.style.color  = 'var(--muted)';
+  }
+
+  // Update close panel summary
+  document.getElementById('closeSummary').textContent =
+    `Today: ${units} unit${units !== 1 ? 's' : ''} completed vs PDR of ${pdrInt}`;
+  document.getElementById('missReasonGroup').style.display = met ? 'none' : 'block';
+}
+
+async function tapUnit() {
+  if (!activeSession) return;
+  const tapBtn = document.getElementById('tapBtn');
+  tapBtn.disabled = true;
+
+  try {
+    const result = await apiFetch(`/production/session/${activeSession.id}/tap`, { method: 'POST' });
+    activeSession.unitsCompleted = result.unitsCompleted;
+    activeSession.pdrTarget      = result.pdrTarget;
+    renderTicker(result.unitsCompleted, result.pdrTarget);
+
+    // Brief visual feedback
+    tapBtn.style.background = 'var(--surface2)';
+    tapBtn.style.borderColor = result.metPdr ? 'var(--success)' : 'var(--accent)';
+    setTimeout(() => {
+      tapBtn.style.borderColor = '';
+      tapBtn.style.background  = '';
+      tapBtn.disabled = false;
+    }, 200);
+  } catch(e) {
+    toast(e.message, 'error');
+    tapBtn.disabled = false;
+  }
+}
+
+function toggleClosePanel() {
+  const panel = document.getElementById('closePanel');
+  panel.classList.toggle('show');
+}
+
+async function closeSession() {
+  if (!activeSession) return;
+
+  const pdrInt = Math.ceil(activeSession.pdrTarget);
+  const met    = activeSession.unitsCompleted >= pdrInt;
+
+  const missReasonId = !met
+    ? parseInt(document.getElementById('missReasonSelect').value) || null
+    : null;
+  const missNotes = document.getElementById('missNotesInput').value.trim() || null;
+
+  if (!met && !missReasonId) {
+    toast('Please select a reason for missing PDR', 'error');
+    return;
+  }
+
+  try {
+    const result = await apiFetch(`/production/session/${activeSession.id}/close`, {
+      method: 'POST',
+      body:   JSON.stringify({ missReasonId, missNotes })
+    });
+    toast(result.metPdr ? '✓ Session closed — PDR met!' : 'Session closed.', result.metPdr ? 'success' : '');
+    activeSession = null;
+    document.getElementById('tickerPanel').style.display  = 'none';
+    document.getElementById('sessionSetup').style.display = 'block';
+    document.getElementById('closePanel').classList.remove('show');
+    clearInterval(shiftCheckTimer);
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHIFT WARNING CHECK (runs every 60s)
+// ═══════════════════════════════════════════════════════════
+function startShiftCheck() {
+  checkShift();
+  shiftCheckTimer = setInterval(checkShift, 60_000);
+}
+
+async function checkShift() {
+  if (!activeSession || warningFired) return;
+  try {
+    const s = await apiFetch('/production/shift-status');
+    if (s.inWarningWindow) {
+      const units  = activeSession.unitsCompleted;
+      const pdrInt = Math.ceil(activeSession.pdrTarget);
+      if (units < pdrInt) {
+        warningFired = true;
+        document.getElementById('warnBanner').classList.add('show');
+        document.getElementById('warnText').textContent =
+          `⏰ Less than 1 hour left in shift — you need ${pdrInt - units} more unit${pdrInt - units !== 1 ? 's' : ''} to meet PDR!`;
+
+        // Browser notification if permitted
+        if (Notification.permission === 'granted') {
+          new Notification('Heijunka — PDR Warning', {
+            body: `${pdrInt - units} units needed to meet PDR before 3:00 PM`,
+            icon: '/favicon.ico'
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(p => {
+            if (p === 'granted') new Notification('Heijunka — PDR Warning', {
+              body: `${pdrInt - units} units needed to meet PDR before 3:00 PM`
+            });
+          });
+        }
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════════════════════════════════════════════════════
+// OPEN ORDERS
+// ═══════════════════════════════════════════════════════════
+async function loadOrders() {
+  document.getElementById('ordersBody').innerHTML =
+    '<div class="empty-state"><span class="spinner"></span>&nbsp; Loading…</div>';
+  try {
+    const orders = await apiFetch('/cards/open-orders');
+    if (!orders.length) {
+      document.getElementById('ordersBody').innerHTML =
+        '<div class="empty-state">No open orders found.</div>';
+      return;
+    }
+    const fmt = d => d ? new Date(d).toLocaleDateString() : '—';
+    document.getElementById('ordersBody').innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>SO ID</th><th>Line</th><th>Customer</th>
+            <th>Part ID</th><th>Description</th><th>Qty</th>
+            <th>Factory Date</th><th>Cell</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(o => `<tr>
+            <td>${o.soId}</td>
+            <td>${o.soLineNo}</td>
+            <td>${o.customerName}</td>
+            <td>${o.partId}</td>
+            <td>${o.soDesc}</td>
+            <td>${o.revOrderQty}</td>
+            <td>${fmt(o.factoryDate)}</td>
+            <td>${o.producingCell || '—'}</td>
+            <td>${o.orderStatus}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('ordersBody').innerHTML =
+      `<div class="empty-state">Error loading orders: ${e.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
