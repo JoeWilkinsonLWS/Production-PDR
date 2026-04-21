@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\josephw\\source\\repos\\Production-PDR\\HeijunkaWeb.csproj": {}
+    "C:\\Users\\josephw\\source\\repos\\Production-PDR\\backend\\HeijunkaWeb.csproj": {}
   },
   "projects": {
-    "C:\\Users\\josephw\\source\\repos\\Production-PDR\\HeijunkaWeb.csproj": {
+    "C:\\Users\\josephw\\source\\repos\\Production-PDR\\backend\\HeijunkaWeb.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\HeijunkaWeb.csproj",
+        "projectUniqueName": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\backend\\HeijunkaWeb.csproj",
         "projectName": "HeijunkaWeb",
-        "projectPath": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\HeijunkaWeb.csproj",
+        "projectPath": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\backend\\HeijunkaWeb.csproj",
         "packagesPath": "C:\\Users\\josephw\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\obj\\",
+        "outputPath": "C:\\Users\\josephw\\source\\repos\\Production-PDR\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -30,6 +30,7 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -44,10 +45,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
@@ -90,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

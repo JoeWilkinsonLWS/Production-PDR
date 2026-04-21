@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11716.220 stable
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeijunkaWeb", "HeijunkaWeb.csproj", "{840FB241-226B-2CDE-AD4E-4CD7D2118434}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeijunkaWeb", "backend\HeijunkaWeb.csproj", "{FE764392-6435-645E-C32D-42498EC22365}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{840FB241-226B-2CDE-AD4E-4CD7D2118434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{840FB241-226B-2CDE-AD4E-4CD7D2118434}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{840FB241-226B-2CDE-AD4E-4CD7D2118434}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{840FB241-226B-2CDE-AD4E-4CD7D2118434}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE764392-6435-645E-C32D-42498EC22365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE764392-6435-645E-C32D-42498EC22365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE764392-6435-645E-C32D-42498EC22365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE764392-6435-645E-C32D-42498EC22365}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
