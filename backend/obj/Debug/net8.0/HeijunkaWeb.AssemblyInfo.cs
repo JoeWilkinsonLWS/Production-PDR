@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HeijunkaWeb")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f93e93d7b500111216100947c5bfbc85fc708027")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0fc9c081f32cb031b85f2e0edb39df665b56119a")]
 [assembly: System.Reflection.AssemblyProductAttribute("HeijunkaWeb")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HeijunkaWeb")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
