@@ -1,0 +1,153 @@
+[
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.CardsController",
+    "Method": "GetCard",
+    "RelativePath": "api/Cards/{cardno}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cardno",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.CardsController",
+    "Method": "UpdateStatus",
+    "RelativePath": "api/Cards/{cardno}/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cardno",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "HeijunkaWeb.Controllers.UpdateStatusRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.CardsController",
+    "Method": "GetOpenOrders",
+    "RelativePath": "api/Cards/open-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "GetMissReasons",
+    "RelativePath": "api/Production/miss-reasons",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "GetProducingCells",
+    "RelativePath": "api/Production/producing-cells",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "GetSession",
+    "RelativePath": "api/Production/session",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "producingCell",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "prodLine",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "StartSession",
+    "RelativePath": "api/Production/session",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "HeijunkaWeb.Controllers.StartSessionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "CloseSession",
+    "RelativePath": "api/Production/session/{id}/close",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "HeijunkaWeb.Controllers.CloseSessionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "Tap",
+    "RelativePath": "api/Production/session/{id}/tap",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "HeijunkaWeb.Controllers.ProductionController",
+    "Method": "GetShiftStatus",
+    "RelativePath": "api/Production/shift-status",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
